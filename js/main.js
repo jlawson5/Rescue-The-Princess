@@ -22,6 +22,7 @@ function preload() {
     game.load.audio('jump', 'assets/Mario_Jumping-Mike_Koenig-989896458.mp3');
     game.load.audio('gameover', 'assets/dun_dun_dun-Delsym-719755295.mp3');
     game.load.audio('win', 'assets/SMALL_CROWD_APPLAUSE-Yannick_Lemieux-1268806408.mp3');
+    game.load.audio('music', 'assets/GameMusic.mp3');
 }
 
 var player;
@@ -44,6 +45,7 @@ var jumpsfx;
 var losesfx;
 var winsfx;
 var won = false;
+var music;
         
 function create() {
 
@@ -54,6 +56,11 @@ function create() {
     game.physics.arcade.gravity.y = 250;
     
     bg = game.add.sprite(0, 0, 'bg');
+    
+    music = game.add.audio('music');
+    music.loop = true;
+    music.addMarker('play', 0, 162);
+    music.play('play');
     
     stateText = game.add.text(32, 200, "Game Over! Click to restart!", {font: '34px Arial', fill: '#000'});
     stateText.visible = false;
@@ -68,7 +75,7 @@ function create() {
     player.body.collideWorldBounds = true;
     player.body.setSize(32, 40, 0, 0);
 
-    player.animations.add('run', [0, 1, 2, 3], 10, true);
+    player.animations.add('run', [0, 1, 2, 3], 8, true);
     player.animations.play('run');
     
     slimes = game.add.group();
