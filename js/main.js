@@ -17,6 +17,11 @@ function preload() {
     game.load.spritesheet('slimeFlying', 'assets/SlimeFlying.png', 32, 32);//Flying Slime: Cannot be jumped over//
     game.load.image('princess', 'assets/Princess.png');//Princess: Reach the princess to win the game//
     game.load.image('arrow', 'assets/Arrow.png');//Arrow: Projectile shot by player//
+    game.load.image('bg', 'assets/bg.png');//background//
+    game.load.audio('shoot', 'assets/Blop-Mark_DiAngelo-79054334.mp3');
+    game.load.audio('jump', 'assets/Mario_Jumping-Mike_Koenig-989896458.mp3');
+    game.load.audio('gameover', 'assets/dun_dun_dun-Delsym-719755295.mp3');
+    game.load.audio('win', 'assets/SMALL_CROWD_APPLAUSE-Yannick_Lemieux-1268806408.mp3');
 }
 
 var player;
@@ -34,6 +39,11 @@ var arrowTimer = 0;
 var slimeTimer = 3500;
 var princess;
 var stateText;
+var shootsfx;
+var jumpsfx;
+var losesfx;
+var winsfx;
+var won = false;
         
 function create() {
 
@@ -43,7 +53,9 @@ function create() {
 
     game.physics.arcade.gravity.y = 250;
     
-    stateText = game.add.text(32, 200, "Game Over! Click to restart!", {font: '34px Arial', fill: '#fff'});
+    bg = game.add.sprite(0, 0, 'bg');
+    
+    stateText = game.add.text(32, 200, "Game Over! Click to restart!", {font: '34px Arial', fill: '#000'});
     stateText.visible = false;
     
     floor = game.add.sprite(0, 368, 'floor');
@@ -62,11 +74,20 @@ function create() {
     slimes = game.add.group();
     
     distString = 'Distance: ';
-    distText = game.add.text(10, 10, distString + distance, {font: '34px Arial', fill: '#fff'});
+    distText = game.add.text(10, 10, distString + distance, {font: '34px Arial', fill: '#000'});
 
     cursors = game.input.keyboard.createCursorKeys();
     shootButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-
+    
+    shootsfx = game.add.audio('shoot');
+    jumpsfx = game.add.audio('jump');
+    losesfx = game.add.audio('gameover');
+    winsfx = game.add.audio('win');
+    
+    shootsfx.addMarker('shootArrow', 0, 1);
+    jumpsfx.addMarker('jump', 0, 0.5);
+    losesfx.addMarker('gameover', 0, 2);
+    winsfx.addMarker('winGame', 0, 6);
 }
 
 function update() {
@@ -81,7 +102,8 @@ function update() {
     if (cursors.up.isDown && game.time.now > jumpTimer)
     {
         player.body.velocity.y = -150;
-        jumpTimer = game.time.now + 1000;
+        jumpTimer = game.time.now + 1250;
+        jumpsfx.play('jump');
     }
     else if (cursors.left.isDown)
     {
@@ -101,6 +123,7 @@ function update() {
             arrow.body.velocity.x = 500;
             arrow.body.velocity.y = -40;
             arrowTimer = game.time.now + 750;
+            shootsfx.play('shootArrow');
     }
     
     if(game.time.now > slimeTimer && distance > 0)
@@ -115,7 +138,9 @@ function update() {
     
     game.physics.arcade.overlap(slimes, player, slimeCollision, null, this);
     game.physics.arcade.overlap(arrow, slimes, arrowCollision, null, this);
-    game.physics.arcade.overlap(princess, player, princessCollision, null, this);
+    
+    if(!won)
+        game.physics.arcade.overlap(player, princess, princessCollision, null, this);
     
     if(distance === 0 && princess == null)
     {
@@ -134,6 +159,7 @@ function slimeCollision(player, slime)
 {
     player.kill();
     stateText.text = "Game Over! Click to restart!";
+    losesfx.play('gameover');
     stateText.visible = true;
     game.input.onTap.addOnce(restart,this);
 }
@@ -147,9 +173,11 @@ function arrowCollision(arrow, slime)
     }
 }
         
-function princessCollision(princess, player)
+function princessCollision(player, princess)
 {
-    stateText.text = "Congradulations, you win!\n click to restart!";
+    won = true;
+    stateText.text = "Congratulations, you win!\n click to restart!";
+    winsfx.play('winGame');
     stateText.visible = true;
     game.input.onTap.addOnce(restart, this);
 }
@@ -205,8 +233,10 @@ function restart()
     stateText.visible = false;
     slimes.removeAll();
     princess.kill();//Don't worry, she just warped away!//
+    princess = null;
     player.body.x = 32;
     slimeTimer = 3500;
+    won = false;
 }
 
     };
